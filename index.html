@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AJ Music</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#121212;color:#fff;font-family:Arial,sans-serif;padding-bottom:110px}
+header{background:#080808;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{margin:0;color:#1ed760}
+main{max-width:1100px;margin:auto;padding:24px 5% 130px}
+input,textarea,button{padding:12px;border:0;border-radius:8px;font-size:14px}
+input,textarea{width:100%;background:#292929;color:#fff}
+button{background:#1ed760;color:#111;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+.secondary{background:#333;color:#fff}
+.toolbar,.actions{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+.toolbar input{flex:2;min-width:180px}.toolbar button{flex:1}
+.song-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:14px}
+.song-table th{color:#aaa;font-weight:400;text-align:left;font-size:12px;padding:10px 8px;border-bottom:1px solid #333}
+.song-table td{padding:8px;border-bottom:1px solid transparent;color:#b3b3b3;font-size:14px;vertical-align:middle}
+.song-row{cursor:pointer}.song-row:hover{background:#242424}.song-row:hover td{color:#fff}
+.song-number{width:34px;text-align:center}.song-main{width:48%}.song-album{width:24%}.song-duration{width:70px;text-align:right}.song-actions{width:150px;text-align:right}
+.song-info{display:flex;align-items:center;gap:12px;min-width:0}.cover{width:48px;height:48px;flex:0 0 48px;object-fit:cover;border-radius:4px;background:#282828}.cover-placeholder{display:flex;align-items:center;justify-content:center;font-size:22px;color:#1ed760}
+.song-text{min-width:0}.song-title{display:block;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}.song-artist{display:block;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.row-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.row-actions button{padding:8px;font-size:12px}.hint{color:#aaa;font-size:14px}
+.playlist-tools{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}.playlist-tools input{flex:1;min-width:180px}.playlist-list{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.playlist-chip{background:#333;color:#fff}.playlist-chip.active{background:#1ed760;color:#111}.playlist-song-actions{display:flex;gap:6px;flex-wrap:wrap}.playlist-song-actions button{padding:7px 9px;font-size:12px}.panel{background:#202020;border-radius:12px;padding:16px;margin:20px 0}.table-wrap{overflow-x:auto}.song-table{min-width:620px}
+@media(max-width:700px){.song-album{display:none}.song-main{width:auto}.song-actions{width:100px}.song-actions .edit-label,.song-actions .delete-label{display:none}.row-actions button{padding:8px}}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0}
+.hidden{display:none!important}
+#bulkSongsInput{min-height:160px;resize:vertical;line-height:1.6}
+#bulkSongsStatus,#adminStatus,#loginStatus{white-space:pre-wrap;overflow-wrap:anywhere}
+#player{position:fixed;bottom:0;left:0;right:0;z-index:100;min-height:94px;background:#181818;border-top:1px solid #333;padding:12px 22px;display:grid;grid-template-columns:minmax(120px,1fr) minmax(240px,1.5fr) minmax(100px,1fr);align-items:center;gap:22px}
+.player-song{display:flex;flex-direction:column;gap:6px;overflow:hidden}
+#nowPlaying{font-size:14px;overflow-wrap:anywhere}#playerArtist{color:#aaa;font-size:12px}
+.player-center{width:100%;max-width:650px;justify-self:center}
+.player-buttons{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:8px}
+.player-btn{background:transparent;color:#ddd;border:none;padding:6px;cursor:pointer;font-size:17px}
+.player-btn:hover,.player-btn.active{color:#1ed760}
+.main-play{background:#fff;color:#000;border-radius:50%;width:36px;height:36px}
+.main-play:hover{background:#1ed760;color:#000}
+.progress-row{display:flex;align-items:center;gap:9px;color:#aaa;font-size:11px}
+.progress-row input,.volume-controls input{accent-color:#1ed760;cursor:pointer}
+#progress{width:100%;min-width:0}
+.volume-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+#volume{width:100px;max-width:100%}
+@media(max-width:650px){#player{grid-template-columns:1fr auto;gap:8px 12px;padding:10px 12px}.player-song{grid-column:1}.volume-controls{grid-column:2;grid-row:1}.player-center{grid-column:1/-1;grid-row:2}#volume{width:65px}.player-buttons{gap:12px}}
+
+/* Spotify-inspired three-column layout */
+body{padding:72px 8px 100px;background:#000;color:#f7f7f7}
+.topbar{position:fixed;z-index:50;top:0;left:0;right:0;height:64px;background:#000;padding:8px 22px;display:flex;align-items:center;gap:22px}
+.brand-mark{width:38px;height:38px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;font-size:28px;font-weight:bold;flex-shrink:0}
+.top-search{display:flex;align-items:center;gap:12px;background:#242424;border-radius:28px;padding:0 18px;height:48px;width:min(560px,55vw);margin-left:auto;margin-right:auto}
+.top-search span{font-size:28px;color:#bbb}.top-search input{background:transparent;padding:8px 0;border:0;outline:none;font-size:15px}
+.app-layout{display:grid;grid-template-columns:minmax(240px,24%) minmax(380px,1fr) minmax(240px,23%);gap:8px;height:calc(100vh - 174px);min-height:500px}
+.sidebar,.center-panel,.right-panel{border-radius:9px;min-width:0;overflow:auto}
+.sidebar{background:#121212;padding:20px 16px}.sidebar-heading{display:flex;justify-content:space-between;align-items:center;font-size:16px;margin-bottom:18px}.sidebar-heading span{background:#242424;border-radius:50%;width:34px;height:34px;display:grid;place-items:center;font-size:24px;color:#ddd}
+.library-tabs,.center-chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 20px}.library-tabs span,.center-chips span,.center-chips button{background:#303030;padding:8px 13px;border-radius:20px;font-size:13px;font-weight:bold;border:0;color:#fff;cursor:pointer}.sidebar #playlistsPanel{background:transparent;padding:0;margin:0;border-radius:0}.sidebar #playlistsPanel h2{display:none}.sidebar #playlistsPanel>p.hint{font-size:12px;line-height:1.4}.sidebar .playlist-tools{display:block}.sidebar .playlist-tools input{margin-bottom:8px}.sidebar .playlist-tools button{width:100%;font-size:12px;padding:9px}.playlist-list{display:flex;flex-direction:column;gap:8px}.playlist-chip{text-align:left;white-space:normal}.sidebar-filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.sidebar-filters button{font-size:12px;padding:9px 12px}
+.center-panel{background:linear-gradient(180deg,#49300e 0,#21180d 150px,#121212 330px);padding:20px 28px}.center-chips{margin-top:0}.center-chips span:first-child{background:#fff;color:#111}.center-title{font-size:25px;margin:20px 0 8px}.center-panel .table-wrap{overflow:auto}.center-panel .song-table{min-width:560px}.song-table th{border-bottom:1px solid #ffffff25}.song-table td{border-bottom:1px solid transparent}.song-row:hover{background:#ffffff12}.song-title{font-size:14px}.cover{width:48px;height:48px;flex-basis:48px}.song-actions{width:150px}.right-panel{background:#121212;padding:20px 16px}.right-panel h3{font-size:16px;margin:3px 0 20px}.side-cover{width:100%;aspect-ratio:1/1;border-radius:8px;background:linear-gradient(135deg,#145e5a,#182e3b,#8b6a2b);display:grid;place-items:center;font-size:90px;color:#ffffffaa;margin-bottom:18px}.right-panel h2{font-size:23px;margin:8px 0}.right-panel p{color:#aaa;font-size:13px}.right-note{background:#063f3f;border-radius:8px;padding:16px;margin-top:28px;line-height:1.5}.right-note p{color:#b5e1df}.center-panel .panel{background:#202020}.center-panel #adminPanel{margin-top:28px}
+#player{min-height:82px;padding:10px 18px;grid-template-columns:minmax(160px,1fr) minmax(260px,1.5fr) minmax(130px,1fr);background:#000;border-top:1px solid #202020}.player-buttons{margin-bottom:4px}.main-play{width:34px;height:34px}.player-song{padding-left:6px}
+@media(max-width:1050px){.app-layout{grid-template-columns:230px minmax(0,1fr)}.right-panel{display:none}.top-search{width:50vw}.center-panel{padding:18px}}
+@media(max-width:700px){body{padding:64px 4px 145px}.topbar{padding:8px 12px;gap:10px}.top-search{width:auto;flex:1;margin:0}.top-search input{font-size:13px}.topbar #loginToggle{font-size:11px;padding:9px}.app-layout{display:block;height:auto;min-height:0}.sidebar{margin-bottom:8px;max-height:260px}.center-panel{min-height:420px;padding:16px 10px}.center-panel .song-table{min-width:520px}.center-title{font-size:22px}.sidebar #playlistsPanel>p.hint{display:none}.sidebar .playlist-list{flex-direction:row;flex-wrap:wrap}.sidebar .playlist-chip{max-width:100%}#player{grid-template-columns:1fr auto;gap:8px 12px;padding:8px 10px}.player-song{grid-column:1}.volume-controls{grid-column:2;grid-row:1}.player-center{grid-column:1/-1;grid-row:2}#volume{width:55px}}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-mark">♫</div>
+  <div class="top-search"><span>⌕</span><input id="search" placeholder="What do you want to play?"></div>
+  <button id="loginToggle" class="secondary">Admin Login</button>
+</header>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-heading"><strong>Your Library</strong><span>＋</span></div>
+    <div class="library-tabs"><span>Playlists</span><span>Favorites</span></div>
+<section class="panel" id="playlistsPanel">
+  <h2>Your Playlists</h2>
+  <p class="hint">Create playlists and add songs from the song list. Playlists are saved in this browser on this device.</p>
+  <div class="playlist-tools">
+    <input id="playlistNameInput" maxlength="80" placeholder="Enter a playlist name">
+    <button type="button" id="createPlaylistBtn">＋ Create Playlist</button>
+  </div>
+  <div id="playlistList" class="playlist-list"></div>
+  <div id="playlistDetails" class="table-wrap"></div>
+  <p id="playlistStatus" class="hint" role="status"></p>
+</section>
+    <div class="sidebar-filters"><button id="allBtn">All Songs</button><button id="favBtn" class="secondary">♥ Favorites</button></div>
+  </aside>
+  <main class="center-panel">
+    <div class="center-chips"><button type="button" id="viewAllBtn">All</button><button type="button" id="viewMusicBtn">Music</button><button type="button" id="viewPlaylistsBtn">Playlists</button></div>
+    <h2 class="center-title" id="centerTitle">Your music</h2>
+    <p id="status">Loading songs...</p>
+    <div id="centerPlaylistView" class="hidden"></div>
+    <div id="songTableWrap" class="table-wrap"><table class="song-table"><thead><tr><th class="song-number">#</th><th class="song-main">Title</th><th class="song-album">Album</th><th class="song-duration">Duration</th><th class="song-actions"></th></tr></thead><tbody id="library"></tbody></table></div>
+
+<section id="loginPanel" class="panel hidden">
+  <h2>Admin Login</h2>
+  <form id="loginForm">
+    <div class="fields">
+      <input id="email" type="email" placeholder="Admin email" required>
+      <input id="password" type="password" placeholder="Password" required>
+    </div>
+    <button type="submit">Log In</button>
+    <button type="button" id="cancelLogin" class="secondary">Cancel</button>
+  </form>
+  <p id="loginStatus" role="status"></p>
+</section>
+
+<section id="adminPanel" class="panel hidden">
+  <h2>Admin Dashboard</h2>
+  <h3>Upload Downloaded MP3 Files</h3>
+  <p class="hint">Choose audio files from your computer. They will be uploaded to online storage so visitors can listen too. MP3 files only; choose a small batch at a time.</p>
+  <div class="fields">
+    <input id="audioFilesInput" type="file" accept="audio/mpeg,.mp3,audio/*" multiple>
+    <input id="uploadArtistInput" type="text" placeholder="Artist name (optional)" maxlength="150">
+  </div>
+  <div class="actions"><button type="button" id="uploadFilesBtn">Upload Selected Songs</button></div>
+  <p id="uploadFilesStatus" class="hint" role="status"></p>
+  <hr style="border-color:#333;margin:22px 0">
+  <h3>Add Multiple Songs Using URLs</h3>
+  <p class="hint">Paste one direct HTTPS MP3 URL per line. The filename will be used as the song title; you can edit the title and artist after adding.</p>
+  <textarea id="bulkSongsInput" rows="8" placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"></textarea>
+  <div class="actions">
+    <button type="button" id="bulkAddSongsBtn">Add All URLs</button>
+    <button type="button" id="clearBulkBtn" class="secondary">Clear</button>
+    <button type="button" id="logoutBtn" class="secondary">Log Out</button>
+  </div>
+  <p id="bulkSongsStatus" role="status"></p>
+  <p id="adminStatus" role="status"></p>
+</section>
+  </main>
+  <aside class="right-panel">
+    <h3>Now playing</h3>
+    <div id="sideCover" class="side-cover">♫</div>
+    <h2 id="sideTitle">Choose a song</h2>
+    <p id="sideArtist">AJ Music</p>
+    <div class="right-note"><strong>Welcome to AJ Music</strong><p>Search songs, save favorites, and create your own playlists.</p></div>
+  </aside>
+</div>
+<div id="player">
+  <div class="player-song"><strong id="nowPlaying">Choose a song</strong><small id="playerArtist">AJ Music</small></div>
+  <div class="player-center">
+    <div class="player-buttons">
+      <button id="shuffleBtn" class="player-btn" title="Shuffle">🔀</button>
+      <button id="prevBtn" class="player-btn" title="Previous">⏮</button>
+      <button id="playPauseBtn" class="player-btn main-play" title="Play">▶</button>
+      <button id="nextBtn" class="player-btn" title="Next">⏭</button>
+      <button id="repeatBtn" class="player-btn" title="Repeat">🔁</button>
+    </div>
+    <div class="progress-row"><span id="currentTime">0:00</span><input id="progress" type="range" min="0" max="1000" value="0" step="1"><span id="duration">0:00</span></div>
+  </div>
+  <div class="volume-controls"><button id="muteBtn" class="player-btn" title="Mute">🔊</button><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8"></div>
+  <audio id="audio" preload="metadata"></audio>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+
+// Keep your Firebase project settings here.
+const firebaseConfig = {
+  apiKey: "AIzaSyDIzzxL7Dv1hNm0Y7F7KjGR9vFcg750MF8",
+  authDomain: "aj-music-504a0.firebaseapp.com",
+  projectId: "aj-music-504a0",
+  storageBucket: "aj-music-504a0.firebasestorage.app",
+  messagingSenderId: "530425731303",
+  appId: "1:530425731303:web:a3b6d5794e023247c16a42"
+};
+const ADMIN_UID = "0WFXDrAwfEPU8tjE8NpZwmkK0dI2";
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const $ = id => document.getElementById(id);
+
+let songs = [];
+let isAdmin = false;
+let favoritesOnly = false;
+let favorites = [];
+try { favorites = JSON.parse(localStorage.getItem("ajMusicFavorites") || "[]"); if (!Array.isArray(favorites)) favorites = []; } catch { favorites = []; }
+let currentSongId = null;
+let playlists = [];
+let selectedPlaylistId = null;
+let currentView = "playlists";
+try {
+  playlists = JSON.parse(localStorage.getItem("ajMusicPlaylists") || "[]");
+  if (!Array.isArray(playlists)) playlists = [];
+} catch { playlists = []; }
+let shuffleOn = false;
+let repeatMode = 0;
+let lastVolume = 0.8;
+const audio = $("audio");
+audio.volume = 0.8;
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+}
+
+function playSong(songId, autoplay = true) {
+  const song = songs.find(s => s.id === songId);
+  if (!song || !song.audioUrl) { $("status").textContent = "This song has no audio URL."; return; }
+  if (currentSongId !== songId) {
+    currentSongId = songId;
+    audio.src = song.audioUrl;
+    audio.load();
+    $("currentTime").textContent = "0:00";
+    $("duration").textContent = "0:00";
+    $("progress").value = 0;
+  }
+  $("nowPlaying").textContent = song.title || "Untitled";
+  $("playerArtist").textContent = song.artist || "Unknown artist";
+  render();
+  if (autoplay) audio.play().catch(() => { $("status").textContent = "Playback failed. Check the direct MP3 URL and hosting permissions."; });
+}
+
+function nextTrack(manual = true) {
+  if (!songs.length) return;
+  const currentIndex = songs.findIndex(s => s.id === currentSongId);
+  if (!manual && repeatMode === 0 && !shuffleOn && currentIndex === songs.length - 1) { audio.pause(); audio.currentTime = 0; return; }
+  let nextIndex;
+  if (shuffleOn && songs.length > 1) {
+    do { nextIndex = Math.floor(Math.random() * songs.length); } while (songs[nextIndex].id === currentSongId);
+  } else {
+    nextIndex = currentIndex < 0 ? 0 : currentIndex + 1;
+    if (nextIndex >= songs.length) {
+      if (manual || repeatMode === 1) nextIndex = 0;
+      else { audio.pause(); return; }
+    }
+  }
+  playSong(songs[nextIndex].id);
+}
+function previousTrack() {
+  if (!songs.length) return;
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  const currentIndex = songs.findIndex(s => s.id === currentSongId);
+  playSong(songs[currentIndex <= 0 ? songs.length - 1 : currentIndex - 1].id);
+}
+$("playPauseBtn").onclick = () => {
+  if (!currentSongId && songs.length) playSong(songs[0].id);
+  else if (audio.paused && currentSongId) audio.play().catch(() => { $("status").textContent = "Could not play this audio URL."; });
+  else audio.pause();
+};
+$("prevBtn").onclick = previousTrack;
+$("nextBtn").onclick = () => nextTrack(true);
+$("shuffleBtn").onclick = () => { shuffleOn = !shuffleOn; $("shuffleBtn").classList.toggle("active", shuffleOn); $("shuffleBtn").title = shuffleOn ? "Shuffle on" : "Shuffle off"; };
+$("repeatBtn").onclick = () => {
+  repeatMode = (repeatMode + 1) % 3;
+  $("repeatBtn").classList.toggle("active", repeatMode !== 0);
+  $("repeatBtn").textContent = repeatMode === 2 ? "🔂" : "🔁";
+  $("repeatBtn").title = ["Repeat off", "Repeat all", "Repeat one"][repeatMode];
+};
+audio.addEventListener("play", () => { $("playPauseBtn").textContent = "❚❚"; $("playPauseBtn").title = "Pause"; });
+audio.addEventListener("pause", () => { $("playPauseBtn").textContent = "▶"; $("playPauseBtn").title = "Play"; });
+audio.addEventListener("timeupdate", () => {
+  $("currentTime").textContent = formatTime(audio.currentTime);
+  if (Number.isFinite(audio.duration) && audio.duration > 0) $("progress").value = Math.round(audio.currentTime / audio.duration * 1000);
+});
+audio.addEventListener("loadedmetadata", () => { $("duration").textContent = formatTime(audio.duration); });
+$("progress").addEventListener("input", () => { if (Number.isFinite(audio.duration) && audio.duration > 0) audio.currentTime = Number($("progress").value) / 1000 * audio.duration; });
+$("volume").addEventListener("input", () => { audio.volume = Number($("volume").value); audio.muted = false; lastVolume = audio.volume; $("muteBtn").textContent = audio.volume === 0 ? "🔇" : "🔊"; });
+$("muteBtn").onclick = () => {
+  if (audio.muted || audio.volume === 0) { audio.muted = false; audio.volume = lastVolume || 0.8; $("volume").value = audio.volume; $("muteBtn").textContent = "🔊"; }
+  else { lastVolume = audio.volume; audio.muted = true; $("muteBtn").textContent = "🔇"; }
+};
+audio.addEventListener("ended", () => {
+  if (repeatMode === 2) { audio.currentTime = 0; audio.play().catch(() => {}); }
+  else nextTrack(false);
+});
+audio.addEventListener("error", () => { if (currentSongId) $("status").textContent = "Audio could not load. Check the URL, file permissions, and hosting."; });
+
+$("loginToggle").onclick = () => $("loginPanel").classList.toggle("hidden");
+$("cancelLogin").onclick = () => $("loginPanel").classList.add("hidden");
+$("allBtn").onclick = () => { favoritesOnly = false; render(); };
+$("favBtn").onclick = () => { favoritesOnly = true; render(); };
+$("search").addEventListener("input", () => { if ($("search").value.trim()) currentView = "music"; else currentView = "playlists"; favoritesOnly = false; render(); });
+$("viewAllBtn").onclick = () => { currentView = "all"; favoritesOnly = false; render(); };
+$("viewMusicBtn").onclick = () => { currentView = "music"; favoritesOnly = false; render(); };
+$("viewPlaylistsBtn").onclick = () => { currentView = "playlists"; favoritesOnly = false; render(); };
+
+async function loadSongs() {
+  $("status").textContent = "Loading songs...";
+  try {
+    const snap = await getDocs(collection(db, "songs"));
+    songs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+    $("status").textContent = `${songs.length} song(s) available`;
+  } catch (e) {
+    console.error(e);
+    $("status").textContent = "Could not load songs. Check Firebase configuration and Firestore rules.";
+  }
+}
+
+function savePlaylists() {
+  localStorage.setItem("ajMusicPlaylists", JSON.stringify(playlists));
+}
+
+function renderPlaylists() {
+  const list = $("playlistList");
+  const details = $("playlistDetails");
+  list.replaceChildren();
+  details.replaceChildren();
+
+  if (!playlists.length) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "No playlists yet. Create one above.";
+    list.append(p);
+    return;
+  }
+
+  playlists.forEach(playlist => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "playlist-chip" + (playlist.id === selectedPlaylistId ? " active" : "");
+    chip.textContent = playlist.name;
+    chip.onclick = () => { selectedPlaylistId = playlist.id; currentView = "playlist-detail"; render(); renderPlaylists(); };
+    list.append(chip);
+  });
+
+  const playlist = playlists.find(p => p.id === selectedPlaylistId) || playlists[0];
+  if (!playlist) return;
+  selectedPlaylistId = playlist.id;
+
+  const heading = document.createElement("h3");
+  heading.textContent = playlist.name;
+  details.append(heading);
+  const controls = document.createElement("div");
+  controls.className = "actions";
+  const playAll = document.createElement("button");
+  playAll.textContent = "▶ Play Playlist";
+  playAll.disabled = !playlist.songIds.length;
+  playAll.onclick = () => {
+    const first = playlist.songIds.find(id => songs.some(song => song.id === id));
+    if (first) playSong(first);
+    else $("playlistStatus").textContent = "Add songs to this playlist first.";
+  };
+  const rename = document.createElement("button");
+  rename.className = "secondary";
+  rename.textContent = "Rename";
+  rename.onclick = () => {
+    const name = prompt("New playlist name:", playlist.name);
+    if (name === null || !name.trim()) return;
+    playlist.name = name.trim().slice(0, 80);
+    savePlaylists(); renderPlaylists();
+  };
+  const remove = document.createElement("button");
+  remove.className = "secondary";
+  remove.textContent = "Delete Playlist";
+  remove.onclick = () => {
+    if (!confirm(`Delete playlist "${playlist.name}"?`)) return;
+    playlists = playlists.filter(p => p.id !== playlist.id);
+    selectedPlaylistId = playlists[0]?.id || null;
+    savePlaylists(); renderPlaylists();
+    $("playlistStatus").textContent = "Playlist deleted.";
+  };
+  controls.append(playAll, rename, remove);
+  details.append(controls);
+
+  const table = document.createElement("table");
+  table.className = "song-table";
+  const body = document.createElement("tbody");
+  const playlistSongs = playlist.songIds.map(id => songs.find(song => song.id === id)).filter(Boolean);
+  if (!playlistSongs.length) {
+    const row = document.createElement("tr"); const cell = document.createElement("td");
+    cell.colSpan = 2; cell.className = "hint"; cell.textContent = "This playlist is empty. Use Add to Playlist beside any song.";
+    row.append(cell); body.append(row);
+  }
+  playlistSongs.forEach((song, index) => {
+    const row = document.createElement("tr");
+    const number = document.createElement("td"); number.className = "song-number"; number.textContent = String(index + 1);
+    const infoCell = document.createElement("td");
+    const info = document.createElement("div"); info.className = "song-info";
+    const cover = document.createElement(song.coverUrl ? "img" : "div"); cover.className = "cover";
+    if (song.coverUrl) { cover.src = song.coverUrl; cover.alt = ""; cover.onerror = () => { cover.replaceWith(Object.assign(document.createElement("div"), {className:"cover cover-placeholder", textContent:"♫"})); }; }
+    else { cover.classList.add("cover-placeholder"); cover.textContent = "♫"; }
+    const textBox = document.createElement("div"); textBox.className = "song-text";
+    const title = document.createElement("span"); title.className = "song-title"; title.textContent = song.title || "Untitled";
+    const artist = document.createElement("span"); artist.className = "song-artist"; artist.textContent = song.artist || "Unknown artist";
+    textBox.append(title, artist); info.append(cover, textBox); infoCell.append(info);
+    infoCell.onclick = () => playSong(song.id);
+    const actionsCell = document.createElement("td");
+    const removeSong = document.createElement("button"); removeSong.className = "secondary"; removeSong.textContent = "Remove";
+    removeSong.onclick = () => { playlist.songIds = playlist.songIds.filter(id => id !== song.id); savePlaylists(); renderPlaylists(); $("playlistStatus").textContent = "Song removed from playlist."; };
+    actionsCell.append(removeSong); row.append(number, infoCell, actionsCell); body.append(row);
+  });
+  table.append(body); details.append(table);
+}
+
+$("createPlaylistBtn").onclick = () => {
+  const name = $("playlistNameInput").value.trim();
+  if (!name) { $("playlistStatus").textContent = "Enter a playlist name first."; return; }
+  const playlist = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()), name: name.slice(0, 80), songIds: [] };
+  playlists.push(playlist); selectedPlaylistId = playlist.id;
+  savePlaylists(); $("playlistNameInput").value = ""; $("playlistStatus").textContent = "Playlist created."; renderPlaylists();
+};
+
+function renderCenterPlaylists() {
+  const host = $("centerPlaylistView");
+  host.replaceChildren();
+  if (currentView === "playlists") {
+    if (!playlists.length) {
+      const p = document.createElement("p"); p.className = "hint"; p.textContent = "No playlists yet. Create a playlist in Your Library."; host.append(p); return;
+    }
+    const cards = document.createElement("div");
+    cards.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px";
+    playlists.forEach(playlist => {
+      const card = document.createElement("button"); card.type = "button"; card.className = "secondary";
+      card.style.cssText = "text-align:left;min-height:110px;padding:16px;white-space:pre-line";
+      card.textContent = "♫  " + playlist.name + "\n" + playlist.songIds.length + " song(s)";
+      card.onclick = () => { selectedPlaylistId = playlist.id; currentView = "playlist-detail"; render(); };
+      cards.append(card);
+    });
+    host.append(cards); return;
+  }
+  if (currentView === "playlist-detail") {
+    const playlist = playlists.find(p => p.id === selectedPlaylistId);
+    if (!playlist) { currentView = "playlists"; renderCenterPlaylists(); return; }
+    const back = document.createElement("button"); back.className = "secondary"; back.textContent = "← All Playlists";
+    back.onclick = () => { currentView = "playlists"; render(); }; host.append(back);
+    const heading = document.createElement("h3"); heading.textContent = playlist.name; host.append(heading);
+    const playAll = document.createElement("button"); playAll.textContent = "▶ Play Playlist";
+    playAll.disabled = !playlist.songIds.some(id => songs.some(song => song.id === id));
+    playAll.onclick = () => { const first = playlist.songIds.find(id => songs.some(song => song.id === id)); if (first) playSong(first); };
+    host.append(playAll);
+    const table = document.createElement("table"); table.className = "song-table";
+    const body = document.createElement("tbody");
+    const playlistSongs = playlist.songIds.map(id => songs.find(song => song.id === id)).filter(Boolean);
+    if (!playlistSongs.length) { const row=document.createElement("tr"); const cell=document.createElement("td"); cell.colSpan=2; cell.className="hint"; cell.textContent="This playlist is empty. Search for songs, then use + Playlist to add them."; row.append(cell); body.append(row); }
+    playlistSongs.forEach((song,i) => { const row=document.createElement("tr"); const num=document.createElement("td"); num.textContent=String(i+1); const title=document.createElement("td"); title.textContent=(song.title||"Untitled")+" — "+(song.artist||"Unknown artist"); title.style.cursor="pointer"; title.onclick=()=>playSong(song.id); const remove=document.createElement("button"); remove.className="secondary"; remove.textContent="Remove"; remove.onclick=()=>{playlist.songIds=playlist.songIds.filter(id=>id!==song.id);savePlaylists();render();}; const actions=document.createElement("td"); actions.append(remove); row.append(num,title,actions); body.append(row); });
+    table.append(body); host.append(table);
+  }
+}
+
+function render() {
+  const query = $("search").value.trim().toLowerCase();
+  const root = $("library");
+  root.replaceChildren();
+  const tableWrap = $("songTableWrap");
+  const centerView = $("centerPlaylistView");
+  const searching = query.length > 0;
+  if (currentView === "playlists" || currentView === "playlist-detail") {
+    tableWrap.classList.add("hidden"); centerView.classList.remove("hidden");
+    $("centerTitle").textContent = currentView === "playlists" ? "Your Playlists" : (playlists.find(p => p.id === selectedPlaylistId)?.name || "Playlist");
+    $("status").textContent = currentView === "playlists" ? `${playlists.length} playlist(s)` : "Songs in this playlist";
+    renderCenterPlaylists(); renderPlaylists(); return;
+  }
+  if (!searching && currentView !== "music" && !favoritesOnly) {
+    tableWrap.classList.add("hidden"); centerView.classList.remove("hidden");
+    $("centerTitle").textContent = "Your Playlists"; $("status").textContent = `${playlists.length} playlist(s)`;
+    currentView = "playlists"; renderCenterPlaylists(); renderPlaylists(); return;
+  }
+  tableWrap.classList.remove("hidden"); centerView.classList.add("hidden");
+  $("centerTitle").textContent = searching ? "Search results" : favoritesOnly ? "Favorites" : "Your music";
+  const list = songs.filter(s =>
+    `${s.title || ""} ${s.artist || ""} ${s.album || ""}`.toLowerCase().includes(query) &&
+    (!favoritesOnly || favorites.includes(s.id))
+  );
+  if (!list.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.textContent = favoritesOnly ? "No favorites saved yet." : "No songs found. The admin can add songs.";
+    cell.style.padding = "24px 8px";
+    row.append(cell); root.append(row); renderPlaylists(); return;
+  }
+  list.forEach((song, index) => {
+    const row = document.createElement("tr"); row.className = "song-row";
+    const number = document.createElement("td"); number.className = "song-number"; number.textContent = String(index + 1);
+    const main = document.createElement("td"); main.className = "song-main";
+    const info = document.createElement("div"); info.className = "song-info";
+    let cover;
+    if (song.coverUrl) {
+      cover = document.createElement("img"); cover.className = "cover"; cover.src = song.coverUrl; cover.alt = "";
+      cover.onerror = () => { const placeholder = document.createElement("div"); placeholder.className = "cover cover-placeholder"; placeholder.textContent = "♫"; cover.replaceWith(placeholder); };
+    } else {
+      cover = document.createElement("div"); cover.className = "cover cover-placeholder"; cover.textContent = "♫";
+    }
+    const text = document.createElement("div"); text.className = "song-text";
+    const title = document.createElement("span"); title.className = "song-title"; title.textContent = song.title || "Untitled";
+    const artist = document.createElement("span"); artist.className = "song-artist"; artist.textContent = song.artist || "Unknown artist";
+    text.append(title, artist); info.append(cover, text); main.append(info);
+    main.onclick = () => playSong(song.id);
+    const album = document.createElement("td"); album.className = "song-album"; album.textContent = song.album || "Single";
+    const duration = document.createElement("td"); duration.className = "song-duration"; duration.textContent = song.duration || "—";
+    if (!song.duration && song.audioUrl) {
+      const probe = document.createElement("audio"); probe.preload = "metadata"; probe.src = song.audioUrl;
+      probe.addEventListener("loadedmetadata", () => {
+        const value = formatTime(probe.duration);
+        duration.textContent = value;
+        song.duration = value;
+      }, { once: true });
+      probe.addEventListener("error", () => { probe.removeAttribute("src"); }, { once: true });
+    }
+    const actions = document.createElement("td"); actions.className = "song-actions";
+    const actionBox = document.createElement("div"); actionBox.className = "row-actions";
+    const fav = document.createElement("button"); fav.className = "secondary";
+    fav.textContent = favorites.includes(song.id) ? "♥" : "♡"; fav.title = favorites.includes(song.id) ? "Remove favorite" : "Add favorite";
+    fav.onclick = () => {
+      favorites = favorites.includes(song.id) ? favorites.filter(id => id !== song.id) : [...favorites, song.id];
+      localStorage.setItem("ajMusicFavorites", JSON.stringify(favorites)); render();
+    };
+    const play = document.createElement("button"); play.textContent = "▶"; play.title = "Play song"; play.onclick = () => playSong(song.id);
+    actionBox.append(play, fav);
+    const addToPlaylist = document.createElement("button");
+    addToPlaylist.className = "secondary";
+    addToPlaylist.textContent = "+ Playlist";
+    addToPlaylist.title = "Add song to a playlist";
+    addToPlaylist.onclick = () => {
+      if (!playlists.length) {
+        $("playlistStatus").textContent = "Create a playlist first, then add songs here.";
+        $("playlistNameInput").focus();
+        return;
+      }
+      const options = playlists.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+      const answer = prompt("Choose a playlist by number:\n" + options, "1");
+      if (answer === null) return;
+      const index = Number(answer) - 1;
+      const target = playlists[index];
+      if (!target) { $("playlistStatus").textContent = "That playlist number is not valid."; return; }
+      if (!target.songIds.includes(song.id)) target.songIds.push(song.id);
+      selectedPlaylistId = target.id; savePlaylists(); renderPlaylists();
+      $("playlistStatus").textContent = `Added “${song.title || "Untitled"}” to ${target.name}.`;
+    };
+    actionBox.append(addToPlaylist);
+    if (isAdmin) {
+      const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit"; edit.title = "Edit song details";
+      edit.onclick = async () => {
+        const newTitle = prompt("Song title:", song.title || ""); if (newTitle === null || !newTitle.trim()) return;
+        const newArtist = prompt("Artist name:", song.artist || "Unknown Artist"); if (newArtist === null || !newArtist.trim()) return;
+        const newAlbum = prompt("Album name:", song.album || "Single"); if (newAlbum === null) return;
+        const newCover = prompt("Album cover image URL (optional; leave blank for music icon):", song.coverUrl || ""); if (newCover === null) return;
+        try {
+          const updates = { title: newTitle.trim(), artist: newArtist.trim(), album: newAlbum.trim() || "Single", coverUrl: newCover.trim() };
+          await updateDoc(doc(db, "songs", song.id), updates);
+          Object.assign(song, updates); $("adminStatus").textContent = "Song details updated."; render();
+        } catch (e) { $("adminStatus").textContent = "Could not edit song: " + e.message; }
+      };
+      const remove = document.createElement("button"); remove.className = "secondary"; remove.textContent = "×"; remove.title = "Delete song";
+      remove.onclick = async () => {
+        if (!confirm(`Delete "${song.title || "this song"}" from the catalogue?`)) return;
+        try {
+          await deleteDoc(doc(db, "songs", song.id));
+          if (currentSongId === song.id) { audio.pause(); audio.removeAttribute("src"); currentSongId = null; $("nowPlaying").textContent = "Choose a song"; $("playerArtist").textContent = "AJ Music"; }
+          $("adminStatus").textContent = "Song removed from catalogue."; await loadSongs();
+        } catch (e) { $("adminStatus").textContent = "Delete failed: " + e.message; }
+      };
+      actionBox.append(edit, remove);
+    }
+    actions.append(actionBox); row.append(number, main, album, duration, actions); root.append(row);
+  });
+  renderPlaylists();
+}
+
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); $("loginStatus").textContent = "Signing in...";
+  try {
+    const result = await signInWithEmailAndPassword(auth, $("email").value, $("password").value);
+    if (result.user.uid !== ADMIN_UID) { await signOut(auth); $("loginStatus").textContent = "This account is not the admin."; return; }
+    $("loginStatus").textContent = "Logged in successfully.";
+    $("loginPanel").classList.add("hidden");
+  } catch (e) { console.error(e); $("loginStatus").textContent = "Login failed. Check your admin email and password."; }
+});
+$("logoutBtn").onclick = async () => { try { await signOut(auth); $("adminStatus").textContent = "Logged out."; } catch (e) { $("adminStatus").textContent = e.message; } };
+
+// Upload downloaded audio files to Firebase Storage, then save their public playback URLs in Firestore.
+$("uploadFilesBtn").addEventListener("click", async () => {
+  if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID || !isAdmin) {
+    $("uploadFilesStatus").textContent = "Admin login required.";
+    return;
+  }
+
+  const files = Array.from($("audioFilesInput").files || []);
+  const artist = $("uploadArtistInput").value.trim() || "Unknown Artist";
+  if (!files.length) {
+    $("uploadFilesStatus").textContent = "Choose one or more audio files first.";
+    return;
+  }
+
+  const maxSize = 100 * 1024 * 1024; // 100 MB per file
+  const button = $("uploadFilesBtn");
+  button.disabled = true;
+  let added = 0;
+  const errors = [];
+
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      $("uploadFilesStatus").textContent = `Uploading ${i + 1} of ${files.length}: ${file.name}`;
+      try {
+        if (!(file.type.startsWith("audio/") || /\.(mp3|m4a|aac|ogg|wav|flac)$/i.test(file.name))) {
+          throw new Error("Choose an audio file.");
+        }
+        if (file.size > maxSize) throw new Error("File is larger than 100 MB.");
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const uniquePath = `songs/${auth.currentUser.uid}/${Date.now()}_${i}_${safeName}`;
+        const fileRef = storageRef(storage, uniquePath);
+        await uploadBytes(fileRef, file, { contentType: file.type || "audio/mpeg" });
+        const audioUrl = await getDownloadURL(fileRef);
+        const title = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim() || "Untitled Song";
+        await addDoc(collection(db, "songs"), {
+          title,
+          artist,
+          album: "Single",
+          coverUrl: "",
+          audioUrl,
+          storagePath: uniquePath,
+          createdAt: serverTimestamp()
+        });
+        added++;
+      } catch (error) {
+        console.error("Upload failed:", file.name, error);
+        errors.push(`${file.name}: ${error.message || "Upload failed"}`);
+      }
+    }
+    await loadSongs();
+    $("uploadFilesStatus").textContent = `Added ${added} of ${files.length} song(s).` + (errors.length ? "\n\nProblems:\n" + errors.join("\n") : "");
+    if (!errors.length) $("audioFilesInput").value = "";
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("clearBulkBtn").onclick = () => { $("bulkSongsInput").value = ""; $("bulkSongsStatus").textContent = ""; };
+$("bulkAddSongsBtn").addEventListener("click", async () => {
+  if (!auth.currentUser || auth.currentUser.uid !== ADMIN_UID || !isAdmin) {
+    $("bulkSongsStatus").textContent = "Admin login required."; return;
+  }
+  const urls = $("bulkSongsInput").value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  if (!urls.length) { $("bulkSongsStatus").textContent = "Paste at least one URL."; return; }
+  const button = $("bulkAddSongsBtn"); button.disabled = true;
+  let added = 0; const errors = [];
+  $("bulkSongsStatus").textContent = `Adding ${urls.length} song(s)...`;
+  try {
+    for (let i = 0; i < urls.length; i++) {
+      const audioUrl = urls[i];
+      try {
+        const url = new URL(audioUrl);
+        if (url.protocol !== "https:") throw new Error("HTTPS URL required");
+        const filename = decodeURIComponent(url.pathname.split("/").pop() || "");
+        const title = filename.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim() || "New Song";
+        await addDoc(collection(db, "songs"), { title, artist: "Unknown Artist", album: "Single", coverUrl: "", audioUrl, createdAt: serverTimestamp() });
+        added++;
+      } catch (e) { errors.push(`Line ${i + 1}: ${audioUrl}\n${e.message || "Could not add URL"}`); }
+    }
+    await loadSongs();
+    $("bulkSongsStatus").textContent = `Successfully added: ${added} song(s).` + (errors.length ? "\n\nFailed URLs:\n" + errors.join("\n") : "");
+    if (!errors.length) $("bulkSongsInput").value = "";
+  } finally { button.disabled = false; }
+});
+
+onAuthStateChanged(auth, user => {
+  isAdmin = !!user && user.uid === ADMIN_UID;
+  $("adminPanel").classList.toggle("hidden", !isAdmin);
+  $("loginToggle").classList.toggle("hidden", isAdmin);
+  if (!isAdmin) $("loginPanel").classList.add("hidden");
+  render();
+});
+loadSongs();
+</script>
+</body>
+</html>
